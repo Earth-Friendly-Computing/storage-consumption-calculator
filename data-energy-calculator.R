@@ -8,6 +8,20 @@
 #
 
 library(shiny)
+library(tibble)
+library(ggplot2)
+
+
+# Data from: 
+# US Home: https://www.eia.gov/tools/faqs/faq.php?id=97&t=3
+# US Person per year: https://en.wikipedia.org/wiki/List_of_countries_by_electricity_consumption
+# Alternative Value: https://data.worldbank.org/indicator/EG.USE.ELEC.KH.PC?locations=US
+# https://aviationinfo.net/a320-fuel-burn-per-hour-airbus-a320-fuel-consumption/?expand_article=1
+backing_data <- tibble(
+  Activity = c("Avg US Home", "Avg US Inhabitant", "Avg Flight, NYC -> LA"),
+  Unit = "kWh",
+  Amount = c(10791 / 365 / 24, 11267 / 365 / 24, 0)
+)
 
 # Outer UI
 ui <- fluidPage(
@@ -20,7 +34,7 @@ ui <- fluidPage(
         sidebarPanel(
           numericInput("num", "Number of Gigabytes Stored", value = 0, min = 0, max = 100000),
             radioButtons("disk", "Disk Type",
-                         c("HDD" = 0.65, "SSD" = 1.2)),
+                         c("HDD" = 0.65, "SSD" = 1.2)), ## Units: Watts / TB 
             radioButtons("replication", "Replication Level",
                          c("0.5" = 0.5, "1" = 1.0, "2" = 2.0, "3" = 3.0), selected = "1"),
             # radioButtons("locality", "Locality",
@@ -33,7 +47,8 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-          textOutput("text")
+          textOutput("text"),
+          plotOutput("plot")
         )
     )
 )
@@ -59,7 +74,8 @@ server <- function(input, output) {
         as.numeric(input$units)
       )
     output$text <- renderText({paste("Expected usage: ", val())})
-    
+    output$plot <- renderPlot(ggplot(backing_data) + 
+                                geom_bar(aes(x=Activity,y=Amount), stat="identity"))
 }
 
 # Run the application 
